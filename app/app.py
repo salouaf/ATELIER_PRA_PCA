@@ -88,6 +88,38 @@ def count():
 
     return jsonify(count=n)
 
+@app.route('/status', methods=['GET'])
+def get_status():
+    import time
+# 1. Compter les lignes dans la table events
+    try:
+        conn = get_conn()
+        cur = conn.execute("SELECT COUNT(*) FROM events")
+        event_count = cur.fetchone()[0]
+        conn.close()
+    except Exception:
+        event_count = 0
+
+# 2. Chercher le dernier backup
+    backup_dir = "/backup"
+    last_backup_file = "Aucun"
+    backup_age_seconds = "N/A"
+
+    if os.path.exists(backup_dir):
+        files = [f for f in os.listdir(backup_dir) if os.path.isfile(os.path.join(backup_dir, f))]
+        if files:
+            paths = [os.path.join(backup_dir, f) for f in files]
+            latest_file = max(paths, key=os.path.getmtime)
+            last_backup_file = os.path.basename(latest_file)
+            backup_age_seconds = int(time.time() - os.path.getmtime(latest_file))
+
+ # 3. Retour
+    return jsonify({
+        "count": event_count,
+        "last_backup_file": last_backup_file,
+        "backup_age_seconds": backup_age_seconds
+    })
+
 # ---------- Main ----------
 if __name__ == "__main__":
     init_db()

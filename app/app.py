@@ -91,7 +91,7 @@ def count():
 @app.route('/status', methods=['GET'])
 def get_status():
     import time
-# 1. Compter les lignes dans la table events
+# 1. Compter les événements
     try:
         conn = get_conn()
         cur = conn.execute("SELECT COUNT(*) FROM events")
@@ -100,7 +100,8 @@ def get_status():
     except Exception:
         event_count = 0
 
-# 2. Chercher le dernier backup
+# 2. Configurer le chemin du backup
+# Si tu es en local sur Codespace, le chemin est peut-être différent
     backup_dir = "/backup"
     last_backup_file = "Aucun"
     backup_age_seconds = "N/A"
@@ -113,7 +114,6 @@ def get_status():
             last_backup_file = os.path.basename(latest_file)
             backup_age_seconds = int(time.time() - os.path.getmtime(latest_file))
 
- # 3. Retour
     return jsonify({
         "count": event_count,
         "last_backup_file": last_backup_file,

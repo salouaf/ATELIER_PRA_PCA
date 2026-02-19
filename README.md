@@ -236,22 +236,24 @@ les composants dont la perte entraine une perte de données c'est PVC Prod et ev
 **Exercice 2 :**  
 Expliquez nous pourquoi nous n'avons pas perdu les données lors de la supression du PVC pra-data  
   
-*..Répondez à cet exercice ici..*
+Car notre pod utilise le PVC prod pour consulter les données le Pra-data serve uniquement pour récuperer les données si PVC prod est defaillant ou absent
 
 **Exercice 3 :**  
 Quels sont les RTO et RPO de cette solution ?  
   
-*..Répondez à cet exercice ici..*
+RPO : est le seuil de perte de données acceptable exprimé en durée. Dans notre cas, il est de 1 minute. Cela signifie qu'en cas de sinistre, les données produites entre la dernière sauvegarde (il y a maximum 1 minute) et le moment de la panne seront définitivement perdues.
+
+RTO : est le temps de restauration.Même si nous avons une sauvegarde très récente (moins d'une minute), il faut toujours compter le temps nécessaire pour détecter la panne et réinjecter les données du backup vers la production. Si cette manipulation prend 3 minutes, alors notre RTO est de 3 minutes.
 
 **Exercice 4 :**  
-Pourquoi cette solution (cet atelier) ne peux pas être utilisé dans un vrai environnement de production ? Que manque-t-il ?   
-  
-*..Répondez à cet exercice ici..*
+- dans notre attelier le pvc prod et backup se trouve sur le meme serveur dans la réalité si ce dernier brûle ou subit une inondation ou un pirate attaque notre kubernet on perd Prod ET Backup en même temps.    
+- dans le tp on a provoqué la suppresion de pvd prod et donc on a fait vite attention pour rétablir dans la réalité on peut pas avoir quelque h24 à vérifier donc un systeme d'alerte dois etre mise en place
+- Enfin, la fréquence du Cron (1 minute) n'est pas réaliste pour une base de données de production volumineuse. Le processus de sauvegarde consommerait trop de ressources (CPU, Disque), ralentissant l'application pour les utilisateurs. De plus, si la taille des données devient importante, la durée d'une sauvegarde dépasserait l'intervalle d'une minute, créant un conflit et un risque de crash du serveur."
   
 **Exercice 5 :**  
-Proposez une archtecture plus robuste.   
-  
-*..Répondez à cet exercice ici..*
+- Au lieu de PVC prod et backup sur la même machine on propose d'envoyer les sauvegardes sur un stockage externe
+- Plutôt que d'avoir un seul Docker pour la base de données, on propose une architecture Maître/Esclve : deux conteneurs. Le premier reçoit les données et les copie en temps réel au deuxième.Si le premier Docker crash, le deuxième prend le relais en 1 seconde.
+- ajouter un outils de suppervesion qui surveille si le Cron a bien fonctionné. car en production, tu ne peux pas vérifier manuellement toutes les minutes. Il faut qu'un système t'envoie un SMS ou un Email si la sauvegarde échoue. aussi grace au Monitoring. Si la base de données principale tombe, le système détecte l'anomalie en quelques secondes et envoie une alerte immédiate aux administrateurs.
 
 ---------------------------------------------------
 Séquence 6 : Ateliers  
